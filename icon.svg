@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <!-- 盤子 -->
+  <circle cx="256" cy="280" r="140" fill="none" stroke="#f59e0b" stroke-width="14"/>
+  <circle cx="256" cy="280" r="100" fill="none" stroke="#f59e0b" stroke-width="6" opacity="0.5"/>
+  <!-- 餐叉（左） -->
+  <g transform="translate(170, 110)">
+    <line x1="20" y1="0" x2="20" y2="80" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+    <line x1="35" y1="0" x2="35" y2="80" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+    <line x1="50" y1="0" x2="50" y2="80" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+    <rect x="14" y="80" width="42" height="14" rx="4" fill="#f59e0b"/>
+    <rect x="29" y="94" width="12" height="80" fill="#f59e0b"/>
+  </g>
+  <!-- 餐刀（右） -->
+  <g transform="translate(280, 110)">
+    <path d="M40 0 L60 20 L60 90 L40 100 Z" fill="#f59e0b"/>
+    <rect x="44" y="100" width="12" height="74" fill="#f59e0b"/>
+  </g>
+</svg>

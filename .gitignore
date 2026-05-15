@@ -1,0 +1,5 @@
+_commits.json
+_temp/
+.DS_Store
+Thumbs.db
+*.local
