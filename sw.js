@@ -1,12 +1,11 @@
-const CACHE_NAME = 'where-to-eat-v2';
+const CACHE_NAME = 'where-to-eat-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
-  './css/app.css?v=1',
-  './js/app.js?v=1',
-  './data/restaurants.json?v=1'
+  './css/app.css?v=2',
+  './js/app.js?v=2'
 ];
 
 self.addEventListener('install', (event) => {
@@ -28,6 +27,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+  // OSM API 不快取，讓它每次直接打網路（資料層自己有 localStorage 快取）
   if (url.origin !== location.origin) return;
 
   event.respondWith(

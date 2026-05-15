@@ -304,6 +304,41 @@ body::before {
   color: var(--muted);
 }
 .btn.ghost:hover { color: var(--text-soft); }
+.btn.danger {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.btn.danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+  color: #fee2e2;
+}
+.btn.small {
+  padding: 10px 14px;
+  font-size: 14px;
+}
+#btn-fav.on {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border-color: #fbbf24;
+  color: #1a0e0a;
+  font-weight: 700;
+}
+
+.result-actions-row {
+  display: flex;
+  gap: 8px;
+}
+.result-actions-row .btn { flex: 1; }
+
+/* 資料狀態 */
+.data-status {
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+.data-status.loading { color: var(--accent-2); }
+.data-status.warn { color: #fca5a5; }
 
 /* ============ 抽選動畫 ============ */
 .rolling {
@@ -432,6 +467,159 @@ body::before {
   color: var(--muted);
   line-height: 1.5;
 }
+.list-item-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.list-fav { color: var(--accent-2); }
+.list-blocked-tag {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.link-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.link-btn:hover, .link-btn:active {
+  border-color: var(--accent);
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--text);
+}
+.link-btn.danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.link-btn.danger:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  color: #fee2e2;
+}
+.link-btn.ok { color: var(--good); border-color: rgba(132, 204, 22, 0.3); }
+
+/* 清單 tabs */
+.list-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+}
+.list-tab {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.list-tab:hover { color: var(--text-soft); }
+.list-tab.on {
+  color: var(--accent-2);
+  border-bottom-color: var(--accent);
+}
+.list-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+/* 清單搜尋區 + 新增按鈕 */
+.panel-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.panel-search input { flex: 1; }
+.add-btn {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-warm) 100%);
+  color: #1a0e0a;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  line-height: 1;
+}
+.add-btn:hover { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
+.add-btn:active { transform: scale(0.96); }
+
+/* 新增/編輯面板 */
+.add-panel { z-index: 110; }
+.add-body { padding: 16px 18px; }
+.field {
+  display: block;
+  margin-bottom: 14px;
+}
+.field-label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.field-label .req { color: #fca5a5; }
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: inherit;
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.on {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: var(--accent);
+  color: var(--accent-2);
+}
+
+.add-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.add-actions .btn { flex: 1; }
 
 .hint {
   text-align: center;

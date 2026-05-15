@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="該吃啥">
 
-<link rel="stylesheet" href="./css/app.css?v=1">
+<link rel="stylesheet" href="./css/app.css?v=2">
 </head>
 <body>
 
@@ -28,6 +28,9 @@
     </div>
   </div>
   <div class="topbar-actions">
+    <button id="btn-refresh" class="icon-btn" aria-label="重新抓取資料" title="重新抓取資料">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
     <button id="btn-list" class="icon-btn" aria-label="瀏覽清單" title="清單">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="3.5" cy="18" r="1.5"/></svg>
     </button>
@@ -35,7 +38,7 @@
 </header>
 
 <main class="stage" id="stage">
-  <!-- 開場狀態：邀請使用者 -->
+  <!-- 開場狀態 -->
   <section class="hero" id="hero" aria-hidden="false">
     <div class="hero-emoji" aria-hidden="true">🍽️</div>
     <h2 class="hero-title">不知道吃什麼？</h2>
@@ -67,6 +70,8 @@
         <span class="meal-label">隨便</span>
       </button>
     </div>
+
+    <p id="data-status" class="data-status">準備中…</p>
   </section>
 
   <!-- 結果狀態 -->
@@ -79,14 +84,18 @@
     <p class="result-type" id="result-type">—</p>
     <p class="result-highlight" id="result-highlight">—</p>
     <div class="result-meta-row">
-      <span class="result-price" id="result-price">$</span>
-      <span class="result-divider">·</span>
-      <span class="result-address" id="result-address">—</span>
+      <span class="result-price" id="result-price"></span>
+      <span class="result-divider"></span>
+      <span class="result-address" id="result-address"></span>
     </div>
 
     <div class="result-actions">
       <button class="btn primary" id="btn-redo">🎲 換一家</button>
       <a class="btn" id="btn-map" target="_blank" rel="noopener">🗺 在 Google 地圖開啟</a>
+      <div class="result-actions-row">
+        <button class="btn small" id="btn-fav">☆ 收藏</button>
+        <button class="btn small danger" id="btn-block">🚫 不要再推</button>
+      </div>
       <button class="btn ghost" id="btn-back">← 重選時段</button>
     </div>
   </section>
@@ -99,13 +108,20 @@
 </main>
 
 <!-- 清單抽屜 -->
-<aside id="list-panel" class="panel" aria-hidden="true">
+<aside id="list-panel" class="panel" aria-hidden="true" data-filter="all">
   <div class="panel-head">
-    <h2>豐原區美食</h2>
+    <h2>豐原區美食 <span id="list-count" class="list-count">— 家</span></h2>
     <button class="icon-btn" id="btn-close-list" aria-label="關閉">✕</button>
+  </div>
+  <div class="list-tabs">
+    <button class="list-tab on" data-tab="all">全部</button>
+    <button class="list-tab" data-tab="fav">★ 收藏</button>
+    <button class="list-tab" data-tab="custom">私藏</button>
+    <button class="list-tab" data-tab="blocked">封鎖</button>
   </div>
   <div class="panel-search">
     <input type="search" id="search-input" placeholder="搜尋店名、類型或地址" autocomplete="off">
+    <button class="add-btn" id="btn-add" title="新增私藏店家">+</button>
   </div>
   <div class="panel-body">
     <ul id="list-items" class="list"></ul>
@@ -113,10 +129,50 @@
   </div>
 </aside>
 
+<!-- 新增/編輯店家 -->
+<aside id="add-panel" class="panel add-panel" aria-hidden="true">
+  <div class="panel-head">
+    <h2 id="add-title">新增店家</h2>
+    <button class="icon-btn" id="btn-close-add" aria-label="關閉">✕</button>
+  </div>
+  <div class="panel-body add-body">
+    <label class="field">
+      <span class="field-label">店名 <span class="req">*</span></span>
+      <input id="add-name" type="text" placeholder="例如：阿婆肉粽" autocomplete="off">
+    </label>
+    <label class="field">
+      <span class="field-label">類型</span>
+      <input id="add-type" type="text" placeholder="例如：小吃、日式、咖啡" autocomplete="off">
+    </label>
+    <label class="field">
+      <span class="field-label">地址（選填）</span>
+      <input id="add-address" type="text" placeholder="例如：豐原區中正路 123 號" autocomplete="off">
+    </label>
+    <label class="field">
+      <span class="field-label">特色（選填）</span>
+      <input id="add-highlight" type="text" placeholder="例如：招牌肉粽糯香醬濃" autocomplete="off">
+    </label>
+    <div class="field">
+      <span class="field-label">適合時段（可多選）</span>
+      <div class="chip-group" id="add-tags">
+        <button type="button" class="chip" data-tag="早餐">早餐</button>
+        <button type="button" class="chip" data-tag="午餐">午餐</button>
+        <button type="button" class="chip" data-tag="下午茶">下午茶</button>
+        <button type="button" class="chip" data-tag="晚餐">晚餐</button>
+        <button type="button" class="chip" data-tag="宵夜">宵夜</button>
+      </div>
+    </div>
+    <div class="add-actions">
+      <button class="btn primary" id="add-save">儲存</button>
+      <button class="btn danger" id="add-delete" hidden>刪除</button>
+    </div>
+  </div>
+</aside>
+
 <!-- 浮動 Toast -->
 <div id="toast" class="toast" aria-live="polite"></div>
 
-<script src="./js/app.js?v=1"></script>
+<script src="./js/app.js?v=2"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
