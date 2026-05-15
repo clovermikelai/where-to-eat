@@ -4,19 +4,21 @@
   // ============================================================
   // 設定
   // ============================================================
+  // mode 可為 'meal'（依時段標籤）或 'category'（依類別字串包含關鍵字）
   const MEAL_LABEL = {
-    'early-brunch': { tag: '早餐', filter: ['早餐'] },
-    'lunch':        { tag: '午餐', filter: ['午餐'] },
-    'afternoon':    { tag: '下午茶', filter: ['下午茶'] },
-    'dinner':       { tag: '晚餐', filter: ['晚餐'] },
-    'midnight':     { tag: '宵夜', filter: ['宵夜'] },
-    'any':          { tag: '隨便', filter: null }
+    'early-brunch': { tag: '早餐',   mode: 'meal',     filter: ['早餐'] },
+    'lunch':        { tag: '午餐',   mode: 'meal',     filter: ['午餐'] },
+    'afternoon':    { tag: '下午茶', mode: 'meal',     filter: ['下午茶'] },
+    'dinner':       { tag: '晚餐',   mode: 'meal',     filter: ['晚餐'] },
+    'midnight':     { tag: '宵夜',   mode: 'meal',     filter: ['宵夜'] },
+    'drinks':       { tag: '手搖飲', mode: 'category', filter: ['手搖飲', '飲料'] },
+    'any':          { tag: '隨便',   mode: 'meal',     filter: null }
   };
 
   const ROLLING_EMOJIS = ['🍜','🍱','🍕','🍔','🍣','🥟','🍲','🍰','🧋','🍢','🍙','🥗'];
 
   const STORAGE = {
-    OSM_CACHE: 'wte_osm_cache_v1',
+    OSM_CACHE: 'wte_osm_cache_v2', // bump to invalidate old caches lacking 手搖飲 tags
     CUSTOM:    'wte_custom_v1',
     BLACKLIST: 'wte_blacklist_v1',
     FAVORITES: 'wte_favorites_v1'
@@ -41,6 +43,9 @@
     'bakery': '烘焙', 'dessert': '甜品'
   };
 
+  // cuisine / shop tag 中視為手搖飲的關鍵字
+  const DRINK_KEYWORDS = ['bubble_tea', 'tea', 'beverage', 'juice', 'smoothie', '手搖', '飲料', '茶飲'];
+
   const AMENITY_DEFAULT_TYPE = {
     'restaurant': '餐廳',
     'cafe': '咖啡',
@@ -52,6 +57,15 @@
     'ice_cream': '甜品'
   };
 
+  function isDrink(item) {
+    const cuisine = (item.cuisine || '').toLowerCase();
+    const name = (item.name || '');
+    const type = (item.type || '');
+    return DRINK_KEYWORDS.some(k =>
+      cuisine.includes(k) || name.includes(k) || type.includes(k)
+    );
+  }
+
   // 依類型/amenity 推測適合的時段
   function inferTags(item) {
     const tags = new Set();
@@ -59,7 +73,12 @@
     const type = (item.type || '').toLowerCase();
     const cuisine = (item.cuisine || '').toLowerCase();
 
-    if (amen === 'cafe' || amen === 'bakery' || cuisine.includes('coffee') || cuisine.includes('tea')) {
+    if (isDrink(item)) {
+      tags.add('手搖飲'); tags.add('下午茶');
+      return Array.from(tags);
+    }
+
+    if (amen === 'cafe' || amen === 'bakery' || cuisine.includes('coffee')) {
       tags.add('早餐'); tags.add('下午茶');
     }
     if (cuisine.includes('breakfast') || type.includes('早餐')) {
@@ -141,6 +160,7 @@ out center tags;
       const cuisine = (t.cuisine || '').split(';')[0].trim();
       const amenity = t.amenity || 'restaurant';
       let typeLabel = CUISINE_MAP[cuisine] || AMENITY_DEFAULT_TYPE[amenity] || '餐廳';
+      if (isDrink({ cuisine, name, type: typeLabel })) typeLabel = '手搖飲';
 
       const addrParts = [];
       if (t['addr:city']) addrParts.push(t['addr:city']);
@@ -236,6 +256,14 @@ out center tags;
     const meal = MEAL_LABEL[mealKey];
     const all = allRestaurants().filter(r => !state.blacklist.has(r.id));
     if (!meal || !meal.filter) return all;
+    if (meal.mode === 'category') {
+      // 用類型/標籤同時比對，較鬆
+      return all.filter(r =>
+        meal.filter.includes(r.type) ||
+        (r.tags || []).some(t => meal.filter.includes(t))
+      );
+    }
+    // meal mode: 比對 tags
     return all.filter(r => (r.tags || []).some(t => meal.filter.includes(t)));
   }
 

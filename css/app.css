@@ -158,6 +158,14 @@ body::before {
   width: 100%;
   max-width: 380px;
 }
+/* 最後一張「隨便」獨佔一行 */
+.meal-picker .meal[data-meal="any"] {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+}
+.meal-picker .meal[data-meal="any"] .meal-emoji { font-size: 24px; }
 .meal {
   background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
   border: 1px solid var(--border);

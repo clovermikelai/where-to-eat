@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="該吃啥">
 
-<link rel="stylesheet" href="./css/app.css?v=2">
+<link rel="stylesheet" href="./css/app.css?v=3">
 </head>
 <body>
 
@@ -64,6 +64,10 @@
       <button class="meal" data-meal="midnight">
         <span class="meal-emoji">🌙</span>
         <span class="meal-label">宵夜</span>
+      </button>
+      <button class="meal" data-meal="drinks">
+        <span class="meal-emoji">🧋</span>
+        <span class="meal-label">手搖飲</span>
       </button>
       <button class="meal" data-meal="any">
         <span class="meal-emoji">🎲</span>
@@ -160,6 +164,7 @@
         <button type="button" class="chip" data-tag="下午茶">下午茶</button>
         <button type="button" class="chip" data-tag="晚餐">晚餐</button>
         <button type="button" class="chip" data-tag="宵夜">宵夜</button>
+        <button type="button" class="chip" data-tag="手搖飲">手搖飲</button>
       </div>
     </div>
     <div class="add-actions">
@@ -172,7 +177,7 @@
 <!-- 浮動 Toast -->
 <div id="toast" class="toast" aria-live="polite"></div>
 
-<script src="./js/app.js?v=2"></script>
+<script src="./js/app.js?v=3"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
