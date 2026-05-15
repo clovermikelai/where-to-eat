@@ -121,6 +121,20 @@
     return 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
   }
 
+  // 建立 Google Maps 搜尋 URL：以「店名 + 地址」為主，地圖會自動跳到該商家頁
+  // （顯示評論、照片、營業時間、電話）。座標僅在沒店名時做 fallback。
+  function buildMapUrl(item) {
+    const base = 'https://www.google.com/maps/search/?api=1&query=';
+    if (item.name) {
+      // 店名 + 地址，盡量讓 Google 命中商家
+      const addr = item.address || '台中豐原';
+      return base + encodeURIComponent(item.name + ' ' + addr);
+    }
+    // 沒店名才退回座標
+    if (item.lat && item.lon) return base + item.lat + ',' + item.lon;
+    return base + encodeURIComponent('台中豐原');
+  }
+
   function lsGet(key, fallback) {
     try {
       const v = localStorage.getItem(key);
@@ -337,14 +351,8 @@ out center tags;
       $('#result-address').textContent = '';
     }
 
-    // 地圖連結
-    const mapQuery = r.lat && r.lon
-      ? r.lat + ',' + r.lon + '(' + encodeURIComponent(r.name) + ')'
-      : encodeURIComponent(r.name + ' ' + (r.address || '台中豐原'));
-    const mapUrl = r.lat && r.lon
-      ? `https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}`
-      : `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
-    $('#btn-map').href = mapUrl;
+    // 地圖連結（用店名搜尋讓 Google 命中商家頁）
+    $('#btn-map').href = buildMapUrl(r);
 
     // 收藏狀態
     const favBtn = $('#btn-fav');
@@ -540,10 +548,7 @@ out center tags;
     if (!item) return;
 
     if (action === 'map') {
-      const url = item.lat && item.lon
-        ? `https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lon}`
-        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + (item.address || '台中豐原'))}`;
-      window.open(url, '_blank', 'noopener');
+      window.open(buildMapUrl(item), '_blank', 'noopener');
     } else if (action === 'fav') {
       state.favorites.add(id); persistFavorites(); toast('已收藏 ★'); renderList($('#search-input').value);
     } else if (action === 'unfav') {
