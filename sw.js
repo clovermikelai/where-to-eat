@@ -1,9 +1,12 @@
-const CACHE_NAME = 'where-to-eat-v1';
+const CACHE_NAME = 'where-to-eat-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './css/app.css?v=1',
+  './js/app.js?v=1',
+  './data/restaurants.json?v=1'
 ];
 
 self.addEventListener('install', (event) => {
@@ -24,11 +27,16 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== location.origin) return;
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        if (response && response.ok && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
         return response;
       })
       .catch(() => caches.match(event.request).then((r) => r || caches.match('./index.html')))
