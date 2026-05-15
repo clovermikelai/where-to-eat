@@ -27,8 +27,8 @@
   // OSM 資料 7 天時效
   const OSM_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-  // 豐原區大致範圍 (lat min, lon min, lat max, lon max)
-  const FENGYUAN_BBOX = [24.224, 120.703, 24.272, 120.760];
+  // 豐原區大致範圍 (lat min, lon min, lat max, lon max)，外擴一點以涵蓋邊界店家
+  const FENGYUAN_BBOX = [24.210, 120.690, 24.290, 120.775];
 
   // OSM amenity → 顯示類型
   const CUISINE_MAP = {
@@ -57,6 +57,24 @@
     'ice_cream': '甜品'
   };
 
+  const SHOP_DEFAULT_TYPE = {
+    'bakery': '烘焙',
+    'pastry': '甜點',
+    'confectionery': '甜品',
+    'bubble_tea': '手搖飲',
+    'coffee': '咖啡',
+    'tea': '手搖飲',
+    'deli': '熟食',
+    'butcher': '肉舖',
+    'seafood': '海鮮',
+    'cheese': '起司',
+    'chocolate': '巧克力',
+    'dairy': '乳製品',
+    'frozen_food': '冷凍食品',
+    'greengrocer': '蔬果',
+    'health_food': '健康食品'
+  };
+
   function isDrink(item) {
     const cuisine = (item.cuisine || '').toLowerCase();
     const name = (item.name || '');
@@ -66,20 +84,24 @@
     );
   }
 
-  // 依類型/amenity 推測適合的時段
+  // 依類型/amenity/shop 推測適合的時段
   function inferTags(item) {
     const tags = new Set();
     const amen = item.amenity || '';
+    const shop = item.shop || '';
     const type = (item.type || '').toLowerCase();
     const cuisine = (item.cuisine || '').toLowerCase();
 
-    if (isDrink(item)) {
+    if (isDrink(item) || shop === 'bubble_tea' || shop === 'tea') {
       tags.add('手搖飲'); tags.add('下午茶');
       return Array.from(tags);
     }
 
-    if (amen === 'cafe' || amen === 'bakery' || cuisine.includes('coffee')) {
+    if (amen === 'cafe' || amen === 'bakery' || shop === 'bakery' || shop === 'coffee' || cuisine.includes('coffee')) {
       tags.add('早餐'); tags.add('下午茶');
+    }
+    if (shop === 'pastry' || shop === 'confectionery' || shop === 'chocolate') {
+      tags.add('下午茶');
     }
     if (cuisine.includes('breakfast') || type.includes('早餐')) {
       tags.add('早餐');
@@ -150,11 +172,15 @@
   // ============================================================
   function buildOverpassQuery(bbox) {
     const [s, w, n, e] = bbox;
+    const amenityRe = '^(restaurant|cafe|fast_food|food_court|bar|pub|bakery|ice_cream)$';
+    const shopRe = '^(bakery|pastry|confectionery|bubble_tea|coffee|tea|deli|butcher|seafood|cheese|chocolate|dairy|farm|frozen_food|greengrocer|health_food)$';
     return `
-[out:json][timeout:25];
+[out:json][timeout:30];
 (
-  node["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|bakery|ice_cream)$"](${s},${w},${n},${e});
-  way["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|bakery|ice_cream)$"](${s},${w},${n},${e});
+  node["amenity"~"${amenityRe}"](${s},${w},${n},${e});
+  way["amenity"~"${amenityRe}"](${s},${w},${n},${e});
+  node["shop"~"${shopRe}"](${s},${w},${n},${e});
+  way["shop"~"${shopRe}"](${s},${w},${n},${e});
 );
 out center tags;
 `.trim();
@@ -172,8 +198,13 @@ out center tags;
       seen.add(key);
 
       const cuisine = (t.cuisine || '').split(';')[0].trim();
-      const amenity = t.amenity || 'restaurant';
-      let typeLabel = CUISINE_MAP[cuisine] || AMENITY_DEFAULT_TYPE[amenity] || '餐廳';
+      const amenity = t.amenity || '';
+      const shop = t.shop || '';
+      let typeLabel =
+        CUISINE_MAP[cuisine] ||
+        AMENITY_DEFAULT_TYPE[amenity] ||
+        SHOP_DEFAULT_TYPE[shop] ||
+        '餐廳';
       if (isDrink({ cuisine, name, type: typeLabel })) typeLabel = '手搖飲';
 
       const addrParts = [];
@@ -193,8 +224,9 @@ out center tags;
         name,
         type: typeLabel,
         amenity,
+        shop,
         cuisine,
-        tags: inferTags({ amenity, cuisine, type: typeLabel }),
+        tags: inferTags({ amenity, shop, cuisine, name, type: typeLabel }),
         highlight: t.description || t['description:zh'] || '',
         price: '',
         address,
@@ -244,6 +276,7 @@ out center tags;
   // ============================================================
   const state = {
     osmList: [],
+    seedList: [],
     customList: lsGet(STORAGE.CUSTOM, []),
     blacklist: new Set(lsGet(STORAGE.BLACKLIST, [])),
     favorites: new Set(lsGet(STORAGE.FAVORITES, [])),
@@ -260,7 +293,16 @@ out center tags;
   function persistFavorites() { lsSet(STORAGE.FAVORITES, Array.from(state.favorites)); }
 
   function allRestaurants() {
-    return [...state.osmList, ...state.customList];
+    // 用 name+address 作為去重 key（OSM 與 seed 同名不重複）
+    const map = new Map();
+    const add = (r) => {
+      const key = (r.name || '') + '|' + (r.address || '');
+      if (!map.has(key)) map.set(key, r);
+    };
+    state.osmList.forEach(add);
+    state.seedList.forEach(add);
+    state.customList.forEach(add);
+    return Array.from(map.values());
   }
 
   // ============================================================
@@ -563,6 +605,30 @@ out center tags;
   }
 
   // ============================================================
+  // Seed（內建保底店家）
+  // ============================================================
+  async function loadSeed() {
+    try {
+      const res = await fetch('./data/seed.json?v=1');
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = data.items || [];
+      state.seedList = items.map((r, i) => ({
+        id: 'seed_' + i,
+        source: 'seed',
+        name: r.name,
+        type: r.type || '餐廳',
+        tags: r.tags || ['午餐', '晚餐'],
+        highlight: r.highlight || '',
+        price: r.price || '',
+        address: r.address || ''
+      }));
+    } catch (e) {
+      console.warn('Seed 載入失敗:', e);
+    }
+  }
+
+  // ============================================================
   // OSM 載入流程
   // ============================================================
   async function loadOsmData() {
@@ -699,6 +765,7 @@ out center tags;
   // ============================================================
   async function init() {
     bindEvents();
+    await loadSeed();
     updateDataStatus();
     await loadOsmData();
     updateDataStatus();

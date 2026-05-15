@@ -1,4 +1,4 @@
-const CACHE_NAME = 'where-to-eat-v5';
+const CACHE_NAME = 'where-to-eat-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,8 @@ const ASSETS = [
   './icon-512.png',
   './apple-touch-icon.png',
   './css/app.css?v=3',
-  './js/app.js?v=4'
+  './js/app.js?v=5',
+  './data/seed.json?v=1'
 ];
 
 self.addEventListener('install', (event) => {
